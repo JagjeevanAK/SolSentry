@@ -1,5 +1,4 @@
-import { StateGraph, END, START } from "@langchain/langgraph";
-import type { WorkflowState } from "../types";
+import { StateGraph, Annotation } from "@langchain/langgraph";
 import {
     parseQueryNode,
     fetchDataNode,
@@ -8,91 +7,88 @@ import {
     formatResponseNode
 } from "./nodes";
 
+export const StateAnnotation = Annotation.Root({
+    userQuery: Annotation<string>({
+        reducer: (left, right) => right ?? left ?? "",
+        default: () => ""
+    }),
+    extractedAddresses: Annotation<string[]>({
+        reducer: (left, right) => right ?? left ?? [],
+        default: () => []
+    }),
+    extractedTokens: Annotation<string[]>({
+        reducer: (left, right) => right ?? left ?? [],
+        default: () => []
+    }),
+    queryType: Annotation<"abnormality_detection" | "wallet_analysis" | "transaction_lookup" | "general" | null>({
+        reducer: (left, right) => right ?? left ?? null,
+        default: () => null
+    }),
+    transactions: Annotation<any[]>({
+        reducer: (left, right) => right ?? left ?? [],
+        default: () => []
+    }),
+    accountInfo: Annotation<any | null>({
+        reducer: (left, right) => right ?? left ?? null,
+        default: () => null
+    }),
+    analysis: Annotation<string>({
+        reducer: (left, right) => right ?? left ?? "",
+        default: () => ""
+    }),
+    error: Annotation<string | null>({
+        reducer: (left, right) => right ?? left ?? null,
+        default: () => null
+    }),
+    metadata: Annotation<Record<string, any>>({
+        reducer: (left, right) => ({ ...(left ?? {}), ...(right ?? {}) }),
+        default: () => ({})
+    })
+});
+
 export function createWorkflowGraph() {
-    const workflow = new StateGraph<WorkflowState>({
-        channels: {
-            userQuery: {
-                value: (left?: string, right?: string) => right ?? left ?? "",
-            },
-            extractedAddresses: {
-                value: (left?: string[], right?: string[]) => right ?? left ?? [],
-            },
-            extractedTokens: {
-                value: (left?: string[], right?: string[]) => right ?? left ?? [],
-            },
-            queryType: {
-                value: (left?: any, right?: any) => right ?? left ?? null,
-            },
-            transactions: {
-                value: (left?: any[], right?: any[]) => right ?? left ?? [],
-            },
-            accountInfo: {
-                value: (left?: any, right?: any) => right ?? left ?? null,
-            },
-            analysis: {
-                value: (left?: string, right?: string) => right ?? left ?? "",
-            },
-            error: {
-                value: (left?: string | null, right?: string | null) => right ?? left ?? null,
-            },
-            metadata: {
-                value: (left?: any, right?: any) => ({
-                    ...(left ?? {}),
-                    ...(right ?? {})
-                }),
-            },
-        }
-    });
+    const workflow = new StateGraph(StateAnnotation)
 
-    workflow.addNode("parse_query", parseQueryNode as any);
-    workflow.addNode("fetch_data", fetchDataNode as any);
-    workflow.addNode("deep_dive", deepDiveSuspiciousAddressesNode as any);
-    workflow.addNode("analyze_data", analyzeDataNode as any);
-    workflow.addNode("format_response", formatResponseNode as any);
+        .addNode("parse_query", parseQueryNode)
+        .addNode("fetch_data", fetchDataNode)
+        .addNode("deep_dive", deepDiveSuspiciousAddressesNode)
+        .addNode("analyze_data", analyzeDataNode)
+        .addNode("format_response", formatResponseNode)
 
-    // @ts-ignore - LangGraph type definitions issue
-    workflow.addEdge(START, "parse_query");
+        .addConditionalEdges(
+            "parse_query",
+            (state) => {
+                if (state.error) {
+                    return "format_response";
+                }
+                return "fetch_data";
+            }
+        )
+        .addConditionalEdges(
+            "fetch_data",
+            (state) => {
+                if (state.error) {
+                    return "format_response";
+                }
+                return "deep_dive";
+            }
+        )
+        .addConditionalEdges(
+            "deep_dive",
+            (state) => {
+                if (state.error) {
+                    return "format_response";
+                }
+                return "analyze_data";
+            }
+        )
+        
+        .addEdge("__start__", "parse_query")
+        .addEdge("analyze_data", "format_response")
+        .addEdge("format_response", "__end__")
+        .compile();
     
-    workflow.addConditionalEdges(
-        // @ts-expect-error
-        "parse_query",
-        (state: WorkflowState) => {
-            if (state.error) {
-                return "format_response";
-            }
-            return "fetch_data";
-        }
-    );
-
-    workflow.addConditionalEdges(
-        // @ts-expect-error
-        "fetch_data",
-        (state: WorkflowState) => {
-            if (state.error) {
-                return "format_response";
-            }
-            return "deep_dive";
-        }
-    );
-
-    workflow.addConditionalEdges(
-        // @ts-expect-error
-        "deep_dive",
-        (state: WorkflowState) => {
-            if (state.error) {
-                return "format_response";
-            }
-            return "analyze_data";
-        }
-    );
-
-    // @ts-ignore - LangGraph type definitions issue
-    workflow.addEdge("analyze_data", "format_response");
-    
-    // @ts-ignore - LangGraph type definitions issue
-    workflow.addEdge("format_response", END);
-
-    return workflow.compile();
+    return workflow;
 }
 
 export async function runWorkflow(userQuery: string): Promise<string> {
@@ -103,29 +99,21 @@ export async function runWorkflow(userQuery: string): Promise<string> {
 
     const graph = createWorkflowGraph();
 
-    const initialState: WorkflowState = {
-        userQuery,
-        extractedAddresses: [],
-        extractedTokens: [],
-        queryType: null,
-        transactions: [],
-        accountInfo: null,
-        analysis: "",
-        error: null,
-        metadata: {}
+    const initialState = {
+        userQuery
     };
 
     try {
-        // @ts-ignore - LangGraph type compatibility
-        const result = await graph.invoke(initialState) as WorkflowState;
+        const result = await graph.invoke(initialState);
         
         console.log("\n" + "=".repeat(80));
         console.log("Workflow Complete");
         console.log("=".repeat(80));
         
-        return result?.analysis || "No analysis generated";
-    } catch (error: any) {
+        return result.analysis || "No analysis generated";
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error("Workflow error:", error);
-        return `Workflow failed: ${error.message}`;
+        return `Workflow failed: ${errorMessage}`;
     }
 }

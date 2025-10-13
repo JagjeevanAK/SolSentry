@@ -1,4 +1,4 @@
-# SolScan
+# SolSentry
 
 To install dependencies:
 
