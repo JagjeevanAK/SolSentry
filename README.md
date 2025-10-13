@@ -1,15 +1,15 @@
 # SolSentry
 
+
 To install dependencies:
 
 ```bash
 bun install
 ```
 
-To run:
+To try without starting the server :
 
 ```bash
-bun run index.ts
+ bun run query "ask your query"
+    ## eg. bun run examples/run-analysis.ts "are there any abnormalities in 3Vj8miZuTSdonf4W1xLdYFatrXLm38CShrCi7NbZS5Ah for last 24 hours"
 ```
-
-This project was created using `bun init` in bun v1.2.11. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
