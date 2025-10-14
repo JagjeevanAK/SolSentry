@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "query": "bun run examples/custom-query.ts",
-    "worker": "bun run src/jobs/worker-process.ts",
+    "worker": "bun run src/jobs/workers.ts",
     "server": "bun run src/server.ts",
     "dev": "bun --watch src/server.ts"
   },

@@ -98,6 +98,10 @@ export async function closeWorkers() {
   ]);
 }
 
+console.log('BullMQ Workers Started');
+console.log('Analysis Worker: Ready (concurrency: 5)');
+console.log('Transaction Worker: Ready (concurrency: 3)');
+
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, closing workers...');
   await closeWorkers();
