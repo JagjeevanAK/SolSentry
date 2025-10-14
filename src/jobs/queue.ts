@@ -21,7 +21,6 @@ const defaultQueueOptions: QueueOptions = {
 };
 
 export const analysisQueue = new Queue('analysis', defaultQueueOptions);
-export const transactionQueue = new Queue('transaction', defaultQueueOptions);
 
 export interface AnalysisJobData {
   query: string;
@@ -29,23 +28,10 @@ export interface AnalysisJobData {
   metadata?: Record<string, any>;
 }
 
-export interface TransactionJobData {
-  transactionSignature: string;
-  walletAddress?: string;
-  action: 'analyze' | 'index' | 'process';
-}
-
 export async function addAnalysisJob(data: AnalysisJobData, jobId?: string) {
   return await analysisQueue.add('analyze', data, {
     jobId,
     attempts: 3,
-  });
-}
-
-export async function addTransactionJob(data: TransactionJobData, jobId?: string) {
-  return await transactionQueue.add('process', data, {
-    jobId,
-    attempts: 5,
   });
 }
 
@@ -73,8 +59,5 @@ export async function addRecurringAnalysisJob(
 }
 
 export async function closeQueues() {
-  await Promise.all([
-    analysisQueue.close(),
-    transactionQueue.close(),
-  ]);
+  await analysisQueue.close();
 }

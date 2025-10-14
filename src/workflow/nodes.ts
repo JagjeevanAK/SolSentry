@@ -10,7 +10,7 @@ import {
 import { getTransactionsBySignature } from "../utils/helius-api";
 
 const llm = new ChatOpenAI({
-    modelName: "openai/gpt-5",
+    modelName: "openai/gpt-5",  //use correct model when not using OpenRouter look for model provider website ro model ID
     openAIApiKey: process.env.OPENAI_API_KEY
 });
 
