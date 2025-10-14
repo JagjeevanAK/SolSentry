@@ -193,8 +193,8 @@ export async function fetchDataNode(state: WorkflowState): Promise<Partial<Workf
         
         const solscanType = accountData?.type;
         const accountType = accountData?.account_type;
-        const accountLabel = accountData?.account_label || accountData?.notifications?.label;
-        const accountTagsFromInfo = accountData?.account_tags || accountData?.notifications?.tags || [];
+        const accountLabel = accountData?.account_label;
+        const accountTagsFromInfo = accountData?.account_tags || [];
         
         if (solscanType && solscanType !== "unknown") {
             entityType = solscanType;
@@ -978,8 +978,8 @@ export async function deepDiveSuspiciousAddressesNode(state: WorkflowState): Pro
                 
                 const solscanType = accountData?.type || "UNKNOWN";
                 const accountType = accountData?.account_type || "unknown";
-                const accountLabel = accountData?.account_label || accountData?.notifications?.label || null;
-                const accountTags = accountData?.account_tags || accountData?.notifications?.tags || [];
+                const accountLabel = accountData?.account_label || null;
+                const accountTags = accountData?.account_tags || [];
                 
                 console.log(`    isOnCurve: ${isOnCurve === null ? 'unknown' : isOnCurve} | Solscan Type: ${solscanType} | Account Type: ${accountType}${accountLabel ? ` | Label: ${accountLabel}` : ''}`);
                 if (accountTags.length > 0) {

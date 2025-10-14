@@ -2,8 +2,7 @@ import { Worker, Job } from 'bullmq';
 import { redisConnection } from './redis-config';
 import type { 
   AnalysisJobData, 
-  TransactionJobData, 
-  NotificationJobData 
+  TransactionJobData
 } from './queue';
 import { runWorkflow } from '../workflow/graph';
 
@@ -69,15 +68,6 @@ async function processTransaction(data: TransactionJobData) {
     signature: data.transactionSignature,
     action: data.action,
     processed: true,
-  };
-}
-
-async function sendNotification(data: NotificationJobData) {
-  console.log(`Sending ${data.type} notification to ${data.recipient}: ${data.message}`);
-  return {
-    sent: true,
-    type: data.type,
-    recipient: data.recipient,
   };
 }
 

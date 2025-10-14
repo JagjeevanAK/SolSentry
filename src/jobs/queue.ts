@@ -22,13 +22,6 @@ const defaultQueueOptions: QueueOptions = {
 
 export const analysisQueue = new Queue('analysis', defaultQueueOptions);
 export const transactionQueue = new Queue('transaction', defaultQueueOptions);
-export const notificationQueue = new Queue('notification', {
-  ...defaultQueueOptions,
-  defaultJobOptions: {
-    ...defaultQueueOptions.defaultJobOptions,
-    priority: 1,
-  },
-});
 
 export interface AnalysisJobData {
   query: string;
@@ -42,13 +35,6 @@ export interface TransactionJobData {
   action: 'analyze' | 'index' | 'process';
 }
 
-export interface NotificationJobData {
-  type: 'email' | 'webhook' | 'push';
-  recipient: string;
-  message: string;
-  metadata?: Record<string, any>;
-}
-
 export async function addAnalysisJob(data: AnalysisJobData, jobId?: string) {
   return await analysisQueue.add('analyze', data, {
     jobId,
@@ -60,13 +46,6 @@ export async function addTransactionJob(data: TransactionJobData, jobId?: string
   return await transactionQueue.add('process', data, {
     jobId,
     attempts: 5,
-  });
-}
-
-export async function addNotificationJob(data: NotificationJobData, jobId?: string) {
-  return await notificationQueue.add('notify', data, {
-    jobId,
-    priority: 1,
   });
 }
 
@@ -97,6 +76,5 @@ export async function closeQueues() {
   await Promise.all([
     analysisQueue.close(),
     transactionQueue.close(),
-    notificationQueue.close(),
   ]);
 }
