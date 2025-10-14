@@ -1,4 +1,5 @@
 import axios from "axios";
+import { SOLSCAN_CONFIG } from "../config/api";
 
 const cookie = process.env.SOLSCAN_COOKIE || "solscan_cookie_here";
 
@@ -20,10 +21,14 @@ const getHeaders = () => ({
 });
 
 export async function getAccountInfo(address: string) {
-    const url = `https://api-v2.solscan.io/v2/account?address=${address}&view_as=account`;
+    const url = `${SOLSCAN_CONFIG.baseUrl}${SOLSCAN_CONFIG.endpoints.account}`;
+    const params = { 
+        address, 
+        view_as: "account" 
+    };
     
     try {
-        const res = await axios.get(url, { headers: getHeaders() });
+        const res = await axios.get(url, { params, headers: getHeaders() });
         const cleanedData = JSON.parse(JSON.stringify(res.data));
         
         if (cleanedData?.metadata?.tokens) {
@@ -38,7 +43,7 @@ export async function getAccountInfo(address: string) {
 }
 
 export async function searchSolscan(keyword: string) {
-    const url = "https://api-v2.solscan.io/v2/search";
+    const url = `${SOLSCAN_CONFIG.baseUrl}${SOLSCAN_CONFIG.endpoints.search}`;
     const params = { keyword };
     
     try {

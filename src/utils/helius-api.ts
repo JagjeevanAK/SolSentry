@@ -1,6 +1,7 @@
 import { createHelius } from "helius-sdk";
+import { HELIUS_CONFIG } from "../config/api";
 
-const helius = createHelius({ apiKey: process.env.HELIUS_API_KEY || "" });
+const helius = createHelius({ apiKey: HELIUS_CONFIG.apiKey });
 
 interface Transaction {
     signature: string;
