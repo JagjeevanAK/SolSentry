@@ -1,6 +1,9 @@
 # dependencies (bun install)
 node_modules
 .cursor
+
+# turborepo
+.turbo
 # output
 out
 dist

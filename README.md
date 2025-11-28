@@ -1,154 +1,174 @@
 # SolSentry
 
-AI-powered Solana wallet/ Transaction analysis agent with job queue processing.
+A monorepo for SolSentry - a Solana blockchain visualization and analysis platform powered by AI.
 
-## Prerequisites
+## Architecture
 
-- **Bun** (v1.0 or higher) - [Install Bun](https://bun.sh)
-- **Docker** - Required for Redis
+This project uses [Turborepo](https://turbo.build/repo) to manage a monorepo with the following apps:
 
-## Local Setup
-
-### 1. Install Dependencies
-
-```bash
-bun install
+```mermaid
+graph TB
+    subgraph "Apps"
+        FE[Frontend<br/>Vite + React]
+        BE[Backend<br/>Bun + Express]
+    end
+    
+    subgraph "Infrastructure"
+        Redis[(Redis<br/>Job Queue)]
+    end
+    
+    FE -->|HTTP Requests| BE
+    BE -->|Job Queue| Redis
+    BE -->|AI Processing| LangChain[LangChain + OpenAI]
+    BE -->|Blockchain Data| Helius[Helius SDK]
 ```
 
-### 2. Start Redis with Docker
+### Apps
 
-```bash
-docker-compose up -d
-```
+- **`apps/frontend`**: React application built with Vite
+  - Modern UI with glassmorphism design
+  - Code visualization interface
+  - Job status tracking
+  
+- **`apps/backend`**: Express API server running on Bun
+  - LangChain integration for AI-powered queries
+  - BullMQ job queue with Redis
+  - Helius SDK for Solana blockchain data
+  - Custom query examples
 
-This starts Redis on `localhost:6379`. Verify it's running:
+## Getting Started
 
-```bash
-docker ps
-```
+### Prerequisites
 
-### 3. Environment Variables
+- [Bun](https://bun.sh/) (v1.0.0 or higher)
+- [Docker](https://www.docker.com/) (for Redis)
+- Node.js 18+ (for Turborepo compatibility)
 
-Create a `.env` file in the root directory:
+### Installation
 
-```env
-HELIUS_API_KEY=your_helius_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-# For OpenRouter add base URL and change the model name according to OpenRouter
-OPENAI_BASE_URL=
-PORT=3000
-```
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd solSentry
+   ```
 
-### 4. Start the Application
+2. Install dependencies:
+   ```bash
+   bun install
+   ```
 
-**Development mode with auto-reload:**
+3. Set up environment variables:
+   ```bash
+   # Backend
+   cp apps/backend/.env.example apps/backend/.env
+   # Edit apps/backend/.env with your API keys
+   ```
+
+4. Start Redis:
+   ```bash
+   docker compose up -d
+   ```
+
+### Development
+
+Run both frontend and backend in development mode:
+
 ```bash
 bun run dev
 ```
 
-**Production mode:**
+Or run individual apps:
+
 ```bash
+# Frontend only
+bun run dev --filter=frontend
+
+# Backend only
+bun run dev --filter=solscan
+```
+
+### Backend-Specific Commands
+
+```bash
+# Start the API server
+cd apps/backend
 bun run server
-```
 
-**Start worker (separate terminal):**
-```bash
+# Start the job worker
 bun run worker
+
+# Run custom query examples
+bun run query
 ```
 
-## API Routes
+### Build
 
-### Health Check
-- **GET** `/health`
-- Returns service status
-
-### Submit Analysis Query
-- **POST** `/query`
-- **Body:**
-  ```json
-  {
-    "query": "Analyze wallet 3Vj8miZuTSdonf4W1xLdYFatrXLm38CShrCi7NbZS5Ah for last 24 hours",
-    "userId": "user123",
-    "metadata": {
-      "priority": 10,
-      "delay": 0
-    }
-  }
-  ```
-- **Response:** Job ID and status URL
-
-### Get Job Status
-- **GET** `/jobs/:jobId`
-- Returns detailed job information
-
-### Get Job Result
-- **GET** `/jobs/:jobId/result`
-- Returns completed job result or current status
-
-### List Jobs
-- **GET** `/jobs?state=active&limit=10`
-- **Query params:** `state` (active|completed|failed|delayed), `limit`
-
-### Remove Job
-- **DELETE** `/jobs/:jobId`
-- Removes a job from the queue
-
-### Queue Statistics
-- **GET** `/queues/stats`
-- Returns job queue statistics
-
-## Running Queries Without Server
+Build all apps:
 
 ```bash
-bun run query "your query here"
-
-# Example
-bun run query "are there any abnormalities in 3Vj8miZuTSdonf4W1xLdYFatrXLm38CShrCi7NbZS5Ah for last 24 hours"
+bun run build
 ```
 
-## Directory Structure
+Build specific app:
+
+```bash
+bun run build --filter=frontend
+```
+
+### Lint
+
+Lint all apps:
+
+```bash
+bun run lint
+```
+
+## Project Structure
 
 ```
-src/
-├── config/          # API configuration
-│   └── api.ts       # Helius and Solscan configs
-├── jobs/            # Job queue system
-│   ├── index.ts     # Main job exports
-│   ├── queue.ts     # BullMQ queue setup
-│   ├── redis-config.ts  # Redis connection
-│   └── workers.ts   # Job workers
-├── tools/           # LangChain tools
-│   └── transaction-tools.ts
-├── types/           # TypeScript type definitions
-│   └── index.ts
-├── utils/           # API utilities
-│   ├── helius-api.ts    # Helius SDK wrapper
-│   └── solscan-api.ts   # Solscan API client
-├── workflow/        # LangGraph workflow
-│   ├── graph.ts     # Workflow graph definition
-│   └── nodes.ts     # Workflow nodes
-├── index.ts         # Main exports
-└── server.ts        # Express server
-
-examples/
-└── custom-query.ts  # CLI query runner
+solSentry/
+├── apps/
+│   ├── backend/          # Express API + BullMQ workers
+│   │   ├── src/
+│   │   ├── examples/
+│   │   └── package.json
+│   └── frontend/         # Vite + React app
+│       ├── src/
+│       ├── public/
+│       └── package.json
+├── docker-compose.yml    # Redis service
+├── turbo.json           # Turborepo configuration
+└── package.json         # Root workspace config
 ```
 
 ## Tech Stack
 
-- **Runtime:** Bun
-- **Server:** Express
-- **Queue:** BullMQ + Redis
-- **AI:** LangChain + OpenAI
-- **Blockchain:** Helius SDK, Solscan API
+### Frontend
+- React 19
+- Vite
+- TypeScript
+- CSS (with modern design patterns)
 
-## Troubleshooting
+### Backend
+- Bun runtime
+- Express 5
+- BullMQ (job queue)
+- LangChain (AI integration)
+- Helius SDK (Solana data)
+- TypeScript
 
-**Redis connection failed:**
-- Ensure Docker is running
-- Check Redis container: `docker compose ps`
-- Restart Redis: `docker compose restart redis`
+### Infrastructure
+- Redis (job queue)
+- Docker (containerization)
+- Turborepo (monorepo management)
 
-**Missing API keys:**
-- Verify `.env` file exists
-- Check environment variables are set correctly
+## Learn More
+
+- [Turborepo Documentation](https://turbo.build/repo/docs)
+- [Bun Documentation](https://bun.sh/docs)
+- [LangChain Documentation](https://js.langchain.com/)
+- [Helius SDK](https://docs.helius.dev/)
+
+## License
+
+Private - All rights reserved
