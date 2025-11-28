@@ -1,0 +1,35 @@
+{
+  "name": "solscan",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "query": "bun run examples/custom-query.ts",
+    "worker": "bun run src/jobs/workers.ts",
+    "server": "bun run src/server.ts",
+    "dev": "bun --watch src/server.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.10.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.28",
+    "@langchain/langgraph": "0.4.9",
+    "@langchain/openai": "0.6.15",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "axios": "^1.7.9",
+    "bullmq": "^5.61.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helius-sdk": "2.0.2",
+    "ioredis": "^5.8.1",
+    "langchain": "^0.3.35",
+    "zod": "^4.1.12"
+  }
+}
