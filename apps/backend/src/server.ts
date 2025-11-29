@@ -1,6 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import { analysisQueue } from './jobs/queue';
+import './jobs/workers'; // Start the worker
 import type { AnalysisJobData } from './jobs/queue';
 
 const app = express();
